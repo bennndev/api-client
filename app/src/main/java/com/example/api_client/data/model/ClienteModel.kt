@@ -15,6 +15,8 @@ data class ClienteModel(
     var telefono: String,
     @SerializedName("email")
     var email: String,
-    @SerializedName("documento")
-    var documento: String
+    @SerializedName("tipo_documento")
+    var tipoDocumento: String,
+    @SerializedName("numero_documento")
+    var numeroDocumento: String
 )

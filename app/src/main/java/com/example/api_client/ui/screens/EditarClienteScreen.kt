@@ -21,6 +21,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,10 +46,11 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 @Composable
-fun NuevoClienteScreen(
+fun EditarClienteScreen(
     modifier: Modifier = Modifier,
+    cliente: ClienteModel,
     onCloseClick: () -> Unit = {},
-    onClienteRegistrado: () -> Unit = {}
+    onClienteActualizado: () -> Unit = {}
 ) {
     var nombres by remember { mutableStateOf("") }
     var apellidos by remember { mutableStateOf("") }
@@ -75,8 +77,18 @@ fun NuevoClienteScreen(
     }
     val apiService = remember { retrofit.create(ClienteApiService::class.java) }
     
-    // Función para registrar cliente
-    fun registrarCliente() {
+    // Cargar datos del cliente al iniciar
+    LaunchedEffect(cliente) {
+        nombres = cliente.nombre ?: ""
+        apellidos = cliente.apellido ?: ""
+        telefono = cliente.telefono ?: ""
+        correoElectronico = cliente.email ?: ""
+        numeroDocumento = cliente.numeroDocumento ?: ""
+        tipoDocumento = cliente.tipoDocumento ?: "DNI"
+    }
+    
+    // Función para actualizar cliente
+    fun actualizarCliente() {
         if (nombres.isBlank() || apellidos.isBlank() || telefono.isBlank() || 
             correoElectronico.isBlank() || tipoDocumento.isBlank() || numeroDocumento.isBlank()) {
             errorMessage = "Por favor, completa todos los campos"
@@ -87,10 +99,11 @@ fun NuevoClienteScreen(
         isLoading = true
         scope.launch {
             try {
-                Log.d("NuevoCliente", "Iniciando registro de cliente")
-                Log.d("NuevoCliente", "Datos enviados: nombres=$nombres, apellidos=$apellidos, telefono=$telefono, email=$correoElectronico, tipoDocumento=$tipoDocumento, numeroDocumento=$numeroDocumento")
+                Log.d("EditarCliente", "Iniciando actualización de cliente ID: ${cliente.id}")
+                Log.d("EditarCliente", "Datos enviados: nombres=$nombres, apellidos=$apellidos, telefono=$telefono, email=$correoElectronico, tipoDocumento=$tipoDocumento, numeroDocumento=$numeroDocumento")
                 
-                val cliente = ClienteModel(
+                val clienteActualizado = ClienteModel(
+                    id = cliente.id,
                     nombre = nombres,
                     apellido = apellidos,
                     telefono = telefono,
@@ -99,27 +112,27 @@ fun NuevoClienteScreen(
                     numeroDocumento = numeroDocumento
                 )
                 
-                Log.d("NuevoCliente", "Cliente creado: $cliente")
-                Log.d("NuevoCliente", "Enviando petición al servidor...")
+                Log.d("EditarCliente", "Cliente actualizado: $clienteActualizado")
+                Log.d("EditarCliente", "Enviando petición al servidor...")
                 
-                val response = apiService.createCliente(cliente)
+                val response = apiService.updateCliente(cliente.id ?: return@launch, clienteActualizado)
                 
-                Log.d("NuevoCliente", "Respuesta recibida - Código: ${response.code()}")
-                Log.d("NuevoCliente", "Respuesta exitosa: ${response.isSuccessful}")
-                Log.d("NuevoCliente", "Cuerpo de respuesta: ${response.body()}")
-                Log.d("NuevoCliente", "Error de respuesta: ${response.errorBody()?.string()}")
+                Log.d("EditarCliente", "Respuesta recibida - Código: ${response.code()}")
+                Log.d("EditarCliente", "Respuesta exitosa: ${response.isSuccessful}")
+                Log.d("EditarCliente", "Cuerpo de respuesta: ${response.body()}")
+                Log.d("EditarCliente", "Error de respuesta: ${response.errorBody()?.string()}")
                 
                 if (response.isSuccessful && response.body()?.success == true) {
-                    Log.d("NuevoCliente", "Cliente registrado exitosamente")
+                    Log.d("EditarCliente", "Cliente actualizado exitosamente")
                     showSuccessDialog = true
                 } else {
                     val errorBody = response.errorBody()?.string()
-                    Log.e("NuevoCliente", "Error en respuesta: $errorBody")
-                    errorMessage = response.body()?.message ?: errorBody ?: "Error al registrar cliente"
+                    Log.e("EditarCliente", "Error en respuesta: $errorBody")
+                    errorMessage = response.body()?.message ?: errorBody ?: "Error al actualizar cliente"
                     showErrorDialog = true
                 }
             } catch (e: Exception) {
-                Log.e("NuevoCliente", "Excepción durante el registro", e)
+                Log.e("EditarCliente", "Excepción durante la actualización", e)
                 errorMessage = "Error de conexión: ${e.message}"
                 showErrorDialog = true
             } finally {
@@ -140,7 +153,7 @@ fun NuevoClienteScreen(
                 onClick = onCloseClick,
                 modifier = Modifier
                     .size(24.dp)
-                    .align(Alignment.CenterEnd) //
+                    .align(Alignment.CenterEnd)
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
@@ -151,10 +164,9 @@ fun NuevoClienteScreen(
             }
         }
 
-
         Column(modifier = Modifier.fillMaxWidth()) {
             Text(
-                text = "Registrar nuevo cliente",
+                text = "Editar cliente",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color(0xFF1A1C1C)
@@ -163,7 +175,7 @@ fun NuevoClienteScreen(
             Spacer(modifier = Modifier.height(5.dp))
 
             Text(
-                text = "Información básica del cliente",
+                text = "Actualizar información del cliente",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color(0xFF5D5F5F)
@@ -238,7 +250,7 @@ fun NuevoClienteScreen(
             contentAlignment = Alignment.CenterEnd
         ) {
             Button(
-                onClick = { registrarCliente() },
+                onClick = { actualizarCliente() },
                 enabled = !isLoading,
                 shape = RoundedCornerShape(28.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -254,7 +266,7 @@ fun NuevoClienteScreen(
                     )
                 } else {
                     Text(
-                        text = "Registrar",
+                        text = "Actualizar",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(horizontal = 16.dp)
@@ -268,14 +280,14 @@ fun NuevoClienteScreen(
     if (showSuccessDialog) {
         CustomAlertDialog(
             type = AlertDialogType.SUCCESS,
-            message = "Cliente registrado exitosamente",
+            message = "Cliente actualizado exitosamente",
             onDismissRequest = {
                 showSuccessDialog = false
-                onClienteRegistrado()
+                onClienteActualizado()
             },
             onConfirmClick = {
                 showSuccessDialog = false
-                onClienteRegistrado()
+                onClienteActualizado()
             }
         )
     }
@@ -297,9 +309,20 @@ fun NuevoClienteScreen(
 
 @Preview(showBackground = true)
 @Composable
-fun NuevoClienteScreenPreview() {
-    NuevoClienteScreen(
+fun EditarClienteScreenPreview() {
+    val clienteEjemplo = ClienteModel(
+        id = 1,
+        nombre = "Juan",
+        apellido = "Pérez",
+        telefono = "987654321",
+        email = "juan@example.com",
+        tipoDocumento = "DNI",
+        numeroDocumento = "12345678"
+    )
+    
+    EditarClienteScreen(
+        cliente = clienteEjemplo,
         onCloseClick = { },
-        onClienteRegistrado = { }
+        onClienteActualizado = { }
     )
 }
