@@ -31,7 +31,7 @@ fun InfoCard(
         modifier = modifier,
         shape = RoundedCornerShape(40.dp),
         border = BorderStroke(1.dp, Color(0xFFCFCFCF)),
-        color = MaterialTheme.colorScheme.surface
+        color = Color.White
     ) {
         Column(
             modifier = Modifier

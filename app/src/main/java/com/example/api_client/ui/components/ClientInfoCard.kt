@@ -27,7 +27,7 @@ fun ClientInfoCard(
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(28.dp),
-        color = Color(0xFFF9F9F9)
+        color = Color(0xFFF0F1F1)
     ) {
         Column(
             modifier = Modifier
